@@ -1,0 +1,70 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Unit {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  name      String    @unique @db.VarChar(100)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  bookings  Booking[]
+
+  @@map("units")
+}
+
+model MeetingRoom {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  name      String    @unique @db.VarChar(100)
+  capacity  Int       @db.UnsignedTinyInt
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  bookings  Booking[]
+
+  @@map("meeting_rooms")
+}
+
+model Consumption {
+  id                 Int                  @id @default(autoincrement()) @db.UnsignedInt
+  name               String               @unique @db.VarChar(50)
+  pricePerPax        Int                  @db.UnsignedInt @map("price_per_pax")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  bookingConsumptions BookingConsumption[]
+
+  @@map("consumptions")
+}
+
+model Booking {
+  id                 Int                  @id @default(autoincrement()) @db.UnsignedInt
+  unitId             Int                  @map("unit_id") @db.UnsignedInt
+  meetingRoomId      Int                  @map("meeting_room_id") @db.UnsignedInt
+  date               DateTime             @db.Date
+  startTime          DateTime             @db.Time(0) @map("start_time")
+  endTime            DateTime             @db.Time(0) @map("end_time")
+  numberOfAttendees  Int                  @db.UnsignedTinyInt @map("number_of_attendees")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  
+  unit               Unit                 @relation(fields: [unitId], references: [id])
+  meetingRoom        MeetingRoom          @relation(fields: [meetingRoomId], references: [id])
+  bookingConsumptions BookingConsumption[]
+
+  @@map("bookings")
+}
+
+model BookingConsumption {
+  id            Int         @id @default(autoincrement()) @db.UnsignedInt
+  bookingId     Int         @map("booking_id") @db.UnsignedInt
+  consumptionId Int         @map("consumption_id") @db.UnsignedInt
+  subtotal      Int         @db.UnsignedInt
+
+  booking       Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  consumption   Consumption @relation(fields: [consumptionId], references: [id])
+
+  @@map("booking_consumptions")
+}
